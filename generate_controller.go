@@ -247,7 +247,7 @@ func (c {{contorllerStructName}}) Index() revel.Result {
 		{{modelObjects}} []models.{{modelStruct}}
 		err error
 	)
-	{{modelObjects}}, err = models.Get{{modelStructs}}()
+	{{modelObjects}}, err = {{modelObject}}.Get{{modelStructs}}()
 	if err != nil{
 		return c.RenderError(err)
 	}
@@ -270,7 +270,7 @@ func (c {{contorllerStructName}}) Show(id string) revel.Result {
     	return c.Forbidden("Invalid id parameter", id)
     }
 
-    {{modelObject}}, err = models.Get{{modelStruct}}({{modelObject}}ID)
+    {{modelObject}}, err = {{modelObject}}.Get{{modelStruct}}({{modelObject}}ID)
     if err != nil{
     	return c.NotFound("{{modelStruct}} not found", err)
     }
@@ -290,7 +290,7 @@ func (c {{contorllerStructName}}) Create({{modelObject}} models.{{modelStruct}})
 		return c.Redirect({{modelStruct}}.New)
 	}
 
-	{{modelObject}}, err = models.Add{{modelStruct}}({{modelObject}})
+	{{modelObject}}, err = {{modelObject}}.Add{{modelStruct}}({{modelObject}})
 	if err != nil{
 		return c.RenderError(err)
 	}
@@ -335,7 +335,7 @@ func (c {{contorllerStructName}}) Delete(id string) revel.Result {
     	return c.Forbidden("Invalid id parameter", id)
     }
 
-    {{modelObject}}, err = models.Get{{modelStruct}}({{modelObject}}ID)
+    {{modelObject}}, err = {{modelObject}}.Get{{modelStruct}}({{modelObject}}ID)
     if err != nil{
     	return c.NotFound("{{modelStruct}} not found", err)
     }
@@ -369,7 +369,7 @@ func (c {{contorllerStructName}}) Edit(id string) revel.Result {
     	return c.Forbidden("Invalid id parameter", id)
     }
 
-    {{modelObject}}, err = models.Get{{modelStruct}}({{modelObject}}ID)
+    {{modelObject}}, err = {{modelObject}}.Get{{modelStruct}}({{modelObject}}ID)
     if err != nil{
     	return c.NotFound("{{modelStruct}} not found", err)
     }
@@ -395,7 +395,7 @@ func (c {{contorllerStructName}}) Index() revel.Result {
 		{{modelObjects}} []models.{{modelStruct}}
 		err error
 	)
-	{{modelObjects}}, err = models.Get{{modelStructs}}()
+	{{modelObjects}}, err = {{modelObject}}.Get{{modelStructs}}()
 	if err != nil{
 		errResp := buildErrResponse(err,"500")
 		c.Response.Status = 500
@@ -424,7 +424,7 @@ func (c {{contorllerStructName}}) Show(id string) revel.Result {
     	return c.RenderJSON(errResp)
     }
 
-    {{modelObject}}, err = models.Get{{modelStruct}}({{modelObject}}ID)
+    {{modelObject}}, err = {{modelObject}}.Get{{modelStruct}}({{modelObject}}ID)
     if err != nil{
     	errResp := buildErrResponse(err,"500")
     	c.Response.Status = 500
@@ -448,7 +448,7 @@ func (c {{contorllerStructName}}) Create() revel.Result {
 		return c.RenderJSON(errResp)
 	}
 
-	{{modelObject}}, err = models.Add{{modelStruct}}({{modelObject}})
+	{{modelObject}}, err = {{modelObject}}.Add{{modelStruct}}({{modelObject}})
 	if err != nil{
 		errResp := buildErrResponse(err,"500")
     	c.Response.Status = 500
@@ -497,7 +497,7 @@ func (c {{contorllerStructName}}) Delete(id string) revel.Result {
     	return c.RenderJSON(errResp)
     }
 
-    {{modelObject}}, err = models.Get{{modelStruct}}({{modelObject}}ID)
+    {{modelObject}}, err = {{modelObject}}.Get{{modelStruct}}({{modelObject}}ID)
     if err != nil{
     	errResp := buildErrResponse(err,"500")
     	c.Response.Status = 500
