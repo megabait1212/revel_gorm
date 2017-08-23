@@ -1,11 +1,10 @@
 package main
 
-import(
+import (
 	"os"
 	"path"
 	"strings"
 )
-
 
 // generate model file
 func generateModel(mname, fields, crupath string) {
@@ -22,7 +21,7 @@ func generateModel(mname, fields, crupath string) {
 		packageName = p[i+1 : len(p)-1]
 	}
 
-	// get Struct from fileds 
+	// get Struct from fileds
 	modelStruct, timePkg, err := GetStruct(modelName, fields)
 	if err != nil {
 		ColorLog("[ERRO] Could not genrate models struct: %s\n", err)
@@ -33,7 +32,7 @@ func generateModel(mname, fields, crupath string) {
 	ColorLog("[INFO] Using '%s' as package name\n", packageName)
 
 	// create models folder if not exist
-	filePath := path.Join(crupath ,"app", "models", p)
+	filePath := path.Join(crupath, "app", "models", p)
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		// create controller directory
 		if err := os.MkdirAll(filePath, 0777); err != nil {
@@ -51,15 +50,15 @@ func generateModel(mname, fields, crupath string) {
 		paths := strings.Split(crupath, "/")
 
 		// get app name
-		projectName := paths[len(paths) - 1:][0]
+		projectName := paths[len(paths)-1:][0]
 
 		// get mongodb pcakge path
 		databasePkg := path.Join(projectName, "app", "models", "database")
 
 		content := strings.Replace(modelTpl, "{{packageName}}", "models", -1)
-		if timePkg == true{
+		if timePkg == true {
 			content = strings.Replace(content, "{{timePkg}}", `"time"`, -1)
-		}else{
+		} else {
 			content = strings.Replace(content, "{{timePkg}}", "", -1)
 		}
 		content = strings.Replace(content, "{{databasePkg}}", databasePkg, -1)
@@ -81,15 +80,15 @@ func generateModel(mname, fields, crupath string) {
 func deleteModel(mname, crupath string) {
 	_, f := path.Split(mname)
 	modelName := strings.Title(f)
-	filePath := path.Join(crupath, "app", "models", modelName + ".go")
+	filePath := path.Join(crupath, "app", "models", modelName+".go")
 	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
 		err = os.Remove(filePath)
-		if err != nil{
+		if err != nil {
 			ColorLog("[ERRO] Could not delete model struct: %s\n", err)
-			os.Exit(2)	
+			os.Exit(2)
 		}
 		ColorLog("[INFO] model file deleted: %s\n", filePath)
-		
+
 	}
 
 }
@@ -190,7 +189,7 @@ func Get{{modelStructName}}s() ([]{{modelStructName}},error) {
 
 // Get{{modelStructName}} Get a {{modelStructName}} from database and returns
 // a {{modelStructName}} on success
-func GetPost(id uint64) ({{modelStructName}}, error){
+func Get{{modelStructName}}(id uint64) ({{modelStructName}}, error){
 	var (
 		{{modelObjectName}} {{modelStructName}}
 		err error
@@ -198,7 +197,7 @@ func GetPost(id uint64) ({{modelStructName}}, error){
 	tx := database.DB.Begin()
 	if err = tx.Last(&{{modelObjectName}}, id).Error; err != nil {
      	tx.Rollback()
-     	return post, err
+     	return {{modelObjectName}}, err
   	}
 	tx.Commit()
 	return {{modelObjectName}}, err
@@ -217,4 +216,3 @@ func ({{modelObjectName}} *{{modelStructName}}) Validate(v *revel.Validation) {
 }
 
 `
-
