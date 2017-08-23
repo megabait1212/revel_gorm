@@ -172,7 +172,7 @@ func (m {{modelStructName}}) Delete{{modelStructName}}() error{
 
 // Get{{modelStructName}}s Get all {{modelStructName}} from database and returns
 // list of {{modelStructName}} on success
-func Get{{modelStructName}}s() ([]{{modelStructName}},error) {
+func (m {{modelStructName}}) Get{{modelStructName}}s() ([]{{modelStructName}},error) {
 	var (
 		err error
 		{{modelObjectName}}s []{{modelStructName}}
@@ -189,7 +189,7 @@ func Get{{modelStructName}}s() ([]{{modelStructName}},error) {
 
 // Get{{modelStructName}} Get a {{modelStructName}} from database and returns
 // a {{modelStructName}} on success
-func Get{{modelStructName}}(id uint64) ({{modelStructName}}, error){
+func (m {{modelStructName}}) Get{{modelStructName}}(id uint64) ({{modelStructName}}, error){
 	var (
 		{{modelObjectName}} {{modelStructName}}
 		err error
