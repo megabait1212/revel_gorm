@@ -123,7 +123,7 @@ func (m *{{modelStructName}}) AfterUpdate(scope *gorm.Scope) error {
 
 // Add{{modelStructName}} insert a new {{modelStructName}} into database and returns
 // last inserted {{modelObjectName}} on success.
-func Add{{modelStructName}}(m {{modelStructName}}) ({{modelStructName}}, error) {
+func (m {{modelStructName}}) Add{{modelStructName}}() ({{modelStructName}}, error) {
 	var err error
 	if !database.DB.NewRecord(m) {
 		return m, errors.New("primary key should be blank")
