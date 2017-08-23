@@ -395,7 +395,7 @@ func (c {{contorllerStructName}}) Index() revel.Result {
 		{{modelObjects}} []models.{{modelStruct}}
 		err error
 	)
-	{{modelObjects}}, err = models.{{modelStruct}}.Get{{modelStructs}}()
+	{{modelObjects}}, err = models.{{modelStruct}}{}.Get{{modelStructs}}()
 	if err != nil{
 		errResp := buildErrResponse(err,"500")
 		c.Response.Status = 500
