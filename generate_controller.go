@@ -247,7 +247,7 @@ func (c {{contorllerStructName}}) Index() revel.Result {
 		{{modelObjects}} []models.{{modelStruct}}
 		err error
 	)
-	{{modelObjects}}, err = {{modelObject}}.Get{{modelStructs}}()
+	{{modelObjects}}, err = models.{{modelStruct}}.Get{{modelStructs}}()
 	if err != nil{
 		return c.RenderError(err)
 	}
@@ -290,7 +290,7 @@ func (c {{contorllerStructName}}) Create({{modelObject}} models.{{modelStruct}})
 		return c.Redirect({{modelStruct}}.New)
 	}
 
-	{{modelObject}}, err = {{modelObject}}.Add{{modelStruct}}({{modelObject}})
+	{{modelObject}}, err = {{modelObject}}.Add{{modelStruct}}()
 	if err != nil{
 		return c.RenderError(err)
 	}
@@ -395,7 +395,7 @@ func (c {{contorllerStructName}}) Index() revel.Result {
 		{{modelObjects}} []models.{{modelStruct}}
 		err error
 	)
-	{{modelObjects}}, err = {{modelObject}}.Get{{modelStructs}}()
+	{{modelObjects}}, err = models.{{modelStruct}}.Get{{modelStructs}}()
 	if err != nil{
 		errResp := buildErrResponse(err,"500")
 		c.Response.Status = 500
@@ -448,7 +448,7 @@ func (c {{contorllerStructName}}) Create() revel.Result {
 		return c.RenderJSON(errResp)
 	}
 
-	{{modelObject}}, err = {{modelObject}}.Add{{modelStruct}}({{modelObject}})
+	{{modelObject}}, err = {{modelObject}}.Add{{modelStruct}}()
 	if err != nil{
 		errResp := buildErrResponse(err,"500")
     	c.Response.Status = 500
