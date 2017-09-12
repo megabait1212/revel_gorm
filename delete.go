@@ -1,6 +1,6 @@
 package main
 
-import(
+import (
 	"os"
 )
 
@@ -20,8 +20,8 @@ func init() {
 	cmdDelete.Run = deleteCode
 }
 
-func deleteCode(cmd *Command, args []string){
-	// get current path 
+func deleteCode(cmd *Command, args []string) {
+	// get current path
 	curpath, _ := os.Getwd()
 
 	// check command args exist
@@ -44,7 +44,7 @@ func deleteCode(cmd *Command, args []string){
 
 	switch dcmd {
 	case "scaffold":
-		if len(args)<  2 {
+		if len(args) < 2 {
 			ColorLog("[ERRO] Wrong number of arguments\n")
 			ColorLog("[HINT] Usage: revel_mgo delete controller [controllername]\n")
 			os.Exit(2)
@@ -59,14 +59,14 @@ func deleteCode(cmd *Command, args []string){
 		deleteViews(sname, curpath)
 
 	case "controller":
-		if len(args)<  2 {
+		if len(args) < 2 {
 			ColorLog("[ERRO] Wrong number of arguments\n")
 			ColorLog("[HINT] Usage: revel_mgo delete controller [controllername]\n")
 			os.Exit(2)
 		}
 
 		sname := args[1]
-		ColorLog("[INFO] Removing '%s' model\n", sname)
+		ColorLog("[INFO] Removing '%s' controller\n", sname)
 		deleteController(sname, curpath)
 	case "model":
 		if len(args) < 2 {
@@ -88,7 +88,7 @@ func deleteCode(cmd *Command, args []string){
 		sname := args[1]
 		ColorLog("[INFO] Removing '%s' views\n", sname)
 		deleteViews(sname, curpath)
-		
+
 	default:
 		ColorLog("[ERRO] command is missing\n")
 		os.Exit(2)

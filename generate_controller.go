@@ -18,7 +18,7 @@ func generateRestController(cname, crupath string) {
 	versionName := ""
 	if p != "" {
 		i := strings.LastIndex(p[:len(p)-1], "/")
-		versionName += p[i+1 : len(p)-1]
+		versionName += p[i+1: len(p)-1]
 		defaultFilename += versionName + "_"
 	}
 
@@ -28,7 +28,7 @@ func generateRestController(cname, crupath string) {
 	// get struct for controller
 	controllerStruct, err := GetRestControllerStruct(versionName, controllerName)
 	if err != nil {
-		ColorLog("[ERRO] Could not genrate controllers struct: %s\n", err)
+		ColorLog("[ERRO] Could not generate controllers struct: %s\n", err)
 		os.Exit(2)
 	}
 
@@ -55,6 +55,23 @@ func generateRestController(cname, crupath string) {
 			// gofmt generated source code
 			FormatSourceCode(commonCtrFp)
 			ColorLog("[INFO] controller file generated: %s\n", commonCtrFp)
+		} else {
+			// error creating file
+			ColorLog("[ERRO] Could not create controller file: %s\n", err)
+			os.Exit(2)
+		}
+	}
+
+	// create grid grid.go
+	gridCtrFp := path.Join(crupath, "app", "controllers", "grid.go")
+	if _, err := os.Stat(gridCtrFp); os.IsNotExist(err) {
+		if cf, err := os.OpenFile(gridCtrFp, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0666); err == nil {
+			defer cf.Close()
+			content := strings.Replace(gridTpl, "{{packageName}}", packageName, -1)
+			cf.WriteString(content)
+			// gofmt generated source code
+			FormatSourceCode(gridCtrFp)
+			ColorLog("[INFO] controller file generated: %s\n", gridCtrFp)
 		} else {
 			// error creating file
 			ColorLog("[ERRO] Could not create controller file: %s\n", err)
@@ -109,13 +126,13 @@ func generateController(cname, crupath string) {
 	packageName := "controllers"
 	if p != "" {
 		i := strings.LastIndex(p[:len(p)-1], "/")
-		packageName = p[i+1 : len(p)-1]
+		packageName = p[i+1: len(p)-1]
 	}
 
 	// get struct for controller
 	controllerStruct, err := GetControllerStruct(controllerName)
 	if err != nil {
-		ColorLog("[ERRO] Could not genrate controllers struct: %s\n", err)
+		ColorLog("[ERRO] Could not generate controllers struct: %s\n", err)
 		os.Exit(2)
 	}
 
@@ -229,59 +246,138 @@ func buildErrResponse(err error, errorCode string) CtrlErr {
 	ctrlErr["error_code"] = errorCode
 	return ctrlErr
 }
+`
+var gridTpl = `
+package {{packageName}}
 
+import (
+	"github.com/tidwall/gjson"
+)
 
+func GetGridParams(json []byte) (int, int, []map[string]string, []string) {
+	skip := gjson.GetBytes(json, "skip")
+	take := gjson.GetBytes(json, "take")
+	sortQuery := gjson.GetBytes(json, "sorted")
+	whereQuery := gjson.GetBytes(json, "where.0")
+
+	offset := int(skip.Int())
+	limit := int(take.Int())
+	where := getWhere(whereQuery)
+	sort := getSort(sortQuery)
+
+	return offset, limit, where, sort
+}
+
+func getWhere(p gjson.Result) []map[string]string {
+	var where []map[string]string
+
+	if p.Get("isComplex").Bool() && !p.Get("value").Exists() {
+		where = getPredicates(p.Get("predicates"))
+	} else {
+		w := getWhereFromQuery(p)
+		where = append(where, w)
+	}
+
+	return where
+}
+
+func getPredicates(p gjson.Result) []map[string]string {
+	var predicates []map[string]string
+
+	for _, q := range p.Array() {
+		if q.Get("predicates").Exists() {
+			predicates = getPredicates(q.Get("predicates"))
+		} else {
+			where := getWhereFromQuery(q)
+			predicates = append(predicates, where)
+		}
+	}
+
+	return predicates
+}
+
+func getWhereFromQuery(q gjson.Result) map[string]string {
+	query := q.Map()
+	var w = map[string]string{}
+	w["column"] = query["field"].String()
+	w["value"] = query["value"].String()
+	w["operator"] = query["operator"].String()
+	w["condition"] = query["condition"].String()
+
+	return w
+}
+
+func getSort(sorted gjson.Result) []string {
+	var sort []string
+	for _, q := range sorted.Array() {
+		s := getSortFromQuery(q)
+		sort = append(sort, s)
+	}
+	return sort
+}
+
+func getSortFromQuery(q gjson.Result) string {
+	query := q.Map()
+	s := query["name"].String() + " " + getDirection(query["direction"].String())
+	return s
+}
+
+func getDirection(d string) string {
+	direction := "asc"
+	if d == "descending" {
+		direction = "desc"
+	}
+	return direction
+}
 `
 var controllerTpl = `package {{packageName}}
 
 import (
 	"github.com/revel/revel"
+	"github.com/tidwall/gjson"
 	"{{modelsPkg}}"
 	"fmt"
 )
 
 {{controllerStruct}}
 
-func (c {{contorllerStructName}}) Index() revel.Result {  
-	var (
-		{{modelObjects}} []models.{{modelStruct}}
-		err error
-	)
-	{{modelObjects}}, err = models.{{modelStruct}}.Get{{modelStructs}}()
-	if err != nil{
-		return c.RenderError(err)
-	}
+func (c {{contorllerStructName}}) Index() revel.Result {
+	{{modelObjects}} []models.{{modelStruct}}
+
 	c.Response.Status = 200
     return c.Render({{modelObjects}})
 }
 
-func (c {{contorllerStructName}}) Show(id string) revel.Result {  
-    var (
-    	{{modelObject}} models.{{modelStruct}}
-    	err error
-    )
+func (c {{contorllerStructName}}) Grid() revel.Result {
+	limit, offset, where, sort := GetGridParams(c.Params.JSON)
 
-    if id == ""{
-  		return c.Forbidden("Invalid id parameter", id)
-    }
+	count, {{modelObjects}}, err := models.{{modelStruct}}{}.Get{{modelStructs}}(limit, offset, where, sort)
+	if err != nil {
+		return c.RenderError(err)
+	}
+	c.Response.Status = 200
+	results := make(map[string]interface{})
+	results["result"] = {{modelObjects}}
+	results["count"] = count
 
-    {{modelObject}}ID := parseUintOrDefault(id, 0)
-    if {{modelObject}}ID == 0{
-    	return c.Forbidden("Invalid id parameter", id)
-    }
-
-    {{modelObject}}, err = {{modelObject}}.Get{{modelStruct}}({{modelObject}}ID)
-    if err != nil{
-    	return c.NotFound("{{modelStruct}} not found", err)
-    }
-
-    return c.Render({{modelObject}})
+	return c.RenderJSON(results)
 }
 
-func (c {{contorllerStructName}}) Create({{modelObject}} models.{{modelStruct}}) revel.Result {  
+func (c {{contorllerStructName}}) Create() revel.Result {
     var (
     	err error
+    	{{modelObject}} models.{{modelStruct}}
     )
+
+	err = c.Request.ParseForm()
+	if err != nil {
+		c.Flash.Error(fmt.Sprintln("Error", err))
+	}
+
+	err = decoder.Decode(&{{modelObject}}, c.Request.PostForm)
+	if err != nil {
+		c.Flash.Error(fmt.Sprintln("Error", err))
+	}
 
     {{modelObject}}.Validate(c.Validation)
 	if c.Validation.HasErrors() {
@@ -299,16 +395,27 @@ func (c {{contorllerStructName}}) Create({{modelObject}} models.{{modelStruct}})
 	return c.Redirect("/{{modelObject}}/%d", {{modelObject}}.ID)
 }
 
-func (c {{contorllerStructName}}) Update({{modelObject}} models.{{modelStruct}}) revel.Result {  
+func (c {{contorllerStructName}}) Update() revel.Result {
 	var (
     	err error
+    	{{modelObject}} models.{{modelStruct}}
     )
+
+	err = c.Request.ParseForm()
+	if err != nil {
+		c.Flash.Error(fmt.Sprintln("Error", err))
+	}
+
+	err = decoder.Decode(&{{modelObject}}, c.Request.PostForm)
+	if err != nil {
+		c.Flash.Error(fmt.Sprintln("Error", err))
+	}
 
     {{modelObject}}.Validate(c.Validation)
 	if c.Validation.HasErrors() {
 		c.Validation.Keep()
 		c.FlashParams()
-		return c.Redirect({{modelStruct}}.Edit)
+		return c.Redirect("/attribute-set/%d", {{modelObject}}.ID)
 	}
 
 	{{modelObject}}, err = {{modelObject}}.Update{{modelStruct}}()
@@ -348,9 +455,44 @@ func (c {{contorllerStructName}}) Delete(id string) revel.Result {
 	return c.Redirect({{modelStruct}}.Index)
 }
 
-func (c {{contorllerStructName}}) New() revel.Result { 
+func (c {{contorllerStructName}}) GridDelete() revel.Result {
+	var (
+		err          error
+		{{modelObject}} models.{{modelStruct}}
+	)
+
+	fmt.Println(c.Params.JSON)
+
+	deleted := gjson.GetBytes(c.Params.JSON, "deleted")
+
+	if deleted.Exists() {
+		for _, v := range deleted.Array() {
+			id := v.Get("ID").Uint()
+			fmt.Println(id)
+			if id == 0 {
+				return c.Forbidden("Invalid id parameter", id)
+			}
+
+			{{modelObject}}, err = {{modelObject}}.Get{{modelStruct}}(id)
+			if err != nil {
+				return c.NotFound("{{modelStruct}} not found", err)
+			}
+
+			err = attributeset.Delete{{modelStruct}}()
+			if err != nil {
+				return c.RenderError(err)
+			}
+		}
+	}
+
+	return c.RenderJSON("Success")
+}
+
+func (c {{contorllerStructName}}) New() revel.Result {
 	c.Response.Status = 200
-    return c.Render()
+	var {{modelObject}} models.{{modelStruct}}
+	c.Render({{modelObject}})
+	return c.RenderTemplate("AttributeSet/Edit.html")
 }
 
 func (c {{contorllerStructName}}) Edit(id string) revel.Result { 
@@ -405,7 +547,7 @@ func (c {{contorllerStructName}}) Index() revel.Result {
     return c.RenderJSON({{modelObjects}})
 }
 
-func (c {{contorllerStructName}}) Show(id string) revel.Result {  
+func (c {{contorllerStructName}}) Show(id string) revel.Result {
     var (
     	{{modelObject}} models.{{modelStruct}}
     	err error
@@ -430,12 +572,12 @@ func (c {{contorllerStructName}}) Show(id string) revel.Result {
     	c.Response.Status = 500
     	return c.RenderJSON(errResp)
     }
-  
+
     c.Response.Status = 200
     return c.RenderJSON({{modelObject}})
 }
 
-func (c {{contorllerStructName}}) Create() revel.Result {  
+func (c {{contorllerStructName}}) Create() revel.Result {
     var (
     	{{modelObject}} models.{{modelStruct}}
     	err error

@@ -24,7 +24,7 @@ func generateModel(mname, fields, crupath string) {
 	// get Struct from fileds
 	modelStruct, timePkg, err := GetStruct(modelName, fields)
 	if err != nil {
-		ColorLog("[ERRO] Could not genrate models struct: %s\n", err)
+		ColorLog("[ERRO] Could not generate models struct: %s\n", err)
 		os.Exit(2)
 	}
 
@@ -73,6 +73,23 @@ func generateModel(mname, fields, crupath string) {
 		// error creating file
 		ColorLog("[ERRO] Could not create model file: %s\n", err)
 		os.Exit(2)
+	}
+
+	// create grid grid.go
+	gridModelFp := path.Join(crupath, "app", "models", "grid.go")
+	if _, err := os.Stat(gridModelFp); os.IsNotExist(err) {
+		if cf, err := os.OpenFile(gridModelFp, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0666); err == nil {
+			defer cf.Close()
+			content := strings.Replace(gridModelTpl, "{{packageName}}", packageName, -1)
+			cf.WriteString(content)
+			// gofmt generated source code
+			FormatSourceCode(gridModelFp)
+			ColorLog("[INFO] grid model file generated: %s\n", gridModelFp)
+		} else {
+			// error creating file
+			ColorLog("[ERRO] Could not create grid model file: %s\n", err)
+			os.Exit(2)
+		}
 	}
 }
 
@@ -215,4 +232,67 @@ func ({{modelObjectName}} *{{modelStructName}}) Validate(v *revel.Validation) {
 	//Validation rules here
 }
 
+`
+var gridModelTpl = `
+package {{packageName}}
+
+import (
+	"fmt"
+	"regexp"
+	"strings"
+)
+
+func prepareOrder(o []string) string {
+	return strings.Join(o, ", ")
+}
+
+func prepareWhere(w []map[string]string) (string, []interface{}) {
+	var where string
+	var args []interface{}
+	for i, v := range w {
+		col := ToSnakeCase(v["column"])
+		val := v["value"]
+		fmt.Println(v["operator"])
+
+		switch v["operator"] {
+		case "equal":
+			where += col + " = ?"
+		case "notequal":
+			where += col + " <> ?"
+		case "greaterthan":
+			where += col + " > ?"
+		case "lessthan":
+			where += col + " < ?"
+		case "greaterthanorequal":
+			where += col + " >= ?"
+		case "lessthanorequal":
+			where += col + " <= ?"
+		case "startswith":
+			where += col + " LIKE ?"
+			val = val + "%"
+		case "endswith":
+			where += col + " LIKE ?"
+			val = "%" + val
+		case "contains":
+			where += col + " LIKE ?"
+			val = "%" + val + "%"
+		}
+
+		if len(w)-1 > i {
+			where += " AND "
+		}
+		args = append(args, val)
+	}
+	fmt.Println(where)
+	return where, args
+}
+
+func ToSnakeCase(str string) string {
+	var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
+	var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
+
+	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
+	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
+	return strings.ToLower(snake)
+}
 `

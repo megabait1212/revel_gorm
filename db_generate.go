@@ -1,6 +1,6 @@
 package main
 
-import(
+import (
 	"os"
 )
 
@@ -27,7 +27,7 @@ func init() {
 	cmdGenerate.Flag.Var(&fields, "fields", "specify the fields want to generate.")
 }
 
-func generateCode(cmd *Command, args []string){
+func generateCode(cmd *Command, args []string) {
 	// get current path
 	curpath, _ := os.Getwd()
 
@@ -61,7 +61,7 @@ func generateCode(cmd *Command, args []string){
 		}
 		sname := args[1]
 		ColorLog("[INFO] Using '%s' as controller name\n", sname)
-		ColorLog("[INFO] Using '%s' as controller name\n", sname + "Controller")
+		ColorLog("[INFO] Using '%s' as controller name\n", sname+"Controller")
 
 		//generate model and controller
 		generateModel(sname, fields.String(), curpath)
@@ -89,7 +89,7 @@ func generateCode(cmd *Command, args []string){
 		}
 		sname := args[1]
 		ColorLog("[INFO] Using '%s' as controller name\n", sname)
-		ColorLog("[INFO] Using '%s' as controller name\n", sname + "Controller")
+		ColorLog("[INFO] Using '%s' as controller name\n", sname+"Controller")
 
 		//generate model and controller
 		generateModel(sname, fields.String(), curpath)
@@ -137,5 +137,5 @@ func generateCode(cmd *Command, args []string){
 		os.Exit(2)
 	}
 	ColorLog("[SUCC] generate successfully created!\n")
-	
+
 }

@@ -3,18 +3,18 @@ package main
 import (
 	"archive/tar"
 	"compress/gzip"
+	"errors"
 	"fmt"
+	"github.com/revel/revel"
 	"io"
-	"runtime"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"text/template"
-	"errors"
 	"time"
-	"os/exec"
-	"github.com/revel/revel"
 )
 
 // if os.env DEBUG set, debug is on
@@ -30,7 +30,6 @@ func Debugf(format string, a ...interface{}) {
 		fmt.Fprintf(os.Stderr, fmt.Sprintf("[debug] %s:%d %s\n", file, line, format), a...)
 	}
 }
-
 
 const (
 	Gray = uint8(iota + 90)
@@ -48,7 +47,6 @@ const (
 	WARN = "WARN"
 	SUCC = "SUCC"
 )
-
 
 // Use a wrapper to differentiate logged panics from unexpected ones.
 type LoggedError struct{ error }
@@ -187,10 +185,14 @@ func mustTarGzDir(destFilename, srcDir string) string {
 }
 
 func exists(path string) (bool, error) {
-    _, err := os.Stat(path)
-    if err == nil { return true, nil }
-    if os.IsNotExist(err) { return false, nil }
-    return true, err
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
 }
 
 // empty returns true if the given directory is empty.
@@ -205,14 +207,14 @@ func empty(dirname string) bool {
 	return len(results) == 0
 }
 
-func GetRestControllerStruct(p ,controllerName string) (string, error){
-	controllerStr := "type " +camelString(p) + "_"+ controllerName + " struct{\n"
+func GetRestControllerStruct(p, controllerName string) (string, error) {
+	controllerStr := "type " + camelString(p) + "_" + controllerName + " struct{\n"
 	controllerStr += " *revel.Controller\n"
 	controllerStr += "}\n"
 	return controllerStr, nil
 }
 
-func GetControllerStruct(controllerName string) (string, error){
+func GetControllerStruct(controllerName string) (string, error) {
 	controllerStr := "type " + controllerName + " struct{\n"
 	controllerStr += " *revel.Controller\n"
 	controllerStr += "}\n"
@@ -230,161 +232,66 @@ func GetStruct(structname, fields string) (string, bool, error) {
 	for _, v := range fds {
 		kv := strings.SplitN(v, ":", 2)
 		if len(kv) != 2 {
-			return "", hastime, errors.New("the filds format is wrong. should key:type,key:type " + v)
-		}		
+			return "", hastime, errors.New("the fields format is wrong. should key:type,key:type " + v)
+		}
 		typ, timePackage := getAttrType(kv[1])
 		if timePackage {
 			hastime = true
 		}
 		if typ == "" {
-			return "", hastime, errors.New("the filds format is wrong. should key:type,key:type " + v)
+			return "", hastime, errors.New("the fields format is wrong. should key:type,key:type " + v)
 		}
-		structStr = structStr + camelString(kv[0]) + "       " + typ + "     " + "`json:\"" + strings.ToLower(kv[0]) + "\" gorm:\"column:" + kv[0]+ "\"`\n"
+		structStr = structStr + camelString(kv[0]) + "       " + typ + "     " + "`json:\"" + strings.ToLower(kv[0]) + "\" gorm:\"column:" + kv[0] + "\"`\n"
 	}
 	structStr += "}\n"
 	return structStr, hastime, nil
 }
 
-func GetFormAttributes(structname, fields string) (string, error){
+func GetUpdateFormAttributes(structname, fields string) (string, error) {
 	if fields == "" {
 		return "", errors.New("fields can't empty")
 	}
 
 	fds := strings.Split(fields, ",")
 	structStr := ""
-	for _, v := range fds {
-		kv := strings.SplitN(v, ":", 2)
-		if len(kv) != 2 {
-			return "", errors.New("the filds format is wrong. should key:type,key:type " + v)
-		}		
-		typ := getType(kv[1])
-		if typ == "" {
-			return "", errors.New("the filds format is wrong. should key:type,key:type " + v)
-		}
-		structStr += "<div class=\"form-group\">\n" 
-		structStr += "{{with $field := field \""+ strings.ToLower(structname) + "." + camelString(kv[0]) + "\" .}}\n"
-		structStr += GetInputType(kv[1],kv[0]) +"\n"
-		structStr += "{{end}}\n</div>\n"
-	}
-	return structStr, nil
-}
-
-
-func GetUpdateFormAttributes(structname, fields string) (string, error){
-	if fields == "" {
-		return "", errors.New("fields can't empty")
-	}
-
-	fds := strings.Split(fields, ",")
-	structStr := ""
-	structStr += "{{with $field := field \"post.ID\" .}}\n"
-	structStr += "<input type=\"hidden\" id=\"{{$field.Id}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\">\n"
+	structStr += "{{with $field := field \"" + strings.ToLower(structname) + ".ID\" .}}\n"
+	structStr += "<input type=\"hidden\" id=\"{{$field.ID}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\">\n"
 	structStr += "{{end}}\n"
 	for _, v := range fds {
 		kv := strings.SplitN(v, ":", 2)
 		if len(kv) != 2 {
-			return "", errors.New("the filds format is wrong. should key:type,key:type " + v)
-		}		
+			return "", errors.New("the fields format is wrong. should key:type,key:type " + v)
+		}
 		typ := getType(kv[1])
 		if typ == "" {
-			return "", errors.New("the filds format is wrong. should key:type,key:type " + v)
+			return "", errors.New("the fields format is wrong. should key:type,key:type " + v)
 		}
 
-		structStr += "<div class=\"form-group\">\n" 
-		structStr += "{{with $field := field \""+ strings.ToLower(structname) + "." + camelString(kv[0]) + "\" .}}\n"
-		structStr += GetInputType(kv[1],kv[0]) +"\n"
+		structStr += "<div class=\"form-group\">\n"
+		structStr += "{{with $field := field \"" + strings.ToLower(structname) + "." + camelString(kv[0]) + "\" .}}\n"
+		structStr += GetInputType(kv[1], kv[0]) + "\n"
 		structStr += "{{end}}\n</div>\n"
 	}
 	return structStr, nil
 }
 
-
-          
-func GetInputType(attrType string,s string) string{
+func GetInputType(attrType string, s string) string {
 	kv := strings.SplitN(attrType, ":", 2)
 	switch kv[0] {
 	case "string":
-		return  "<label for=\"{{$field.Id}}\">" + camelString(s) +" * </label>\n"+ "<input type=\"text\" id=\"{{$field.Id}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
+		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "<input type=\"text\" id=\"{{$field.ID}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
 	case "datetime":
-		return  "<label for=\"{{$field.Id}}\">" + camelString(s) +" * </label>\n" + "<input type=\"text\" size=\"10\" id=\"{{$field.Id}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
+		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "<input type=\"text\" size=\"10\" id=\"{{$field.ID}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
 	case "int", "int8", "int16", "int32", "int64":
-		return  "<label for=\"{{$field.Id}}\">" + camelString(s) +" * </label>\n" + "<input type=\"number\" id=\"{{$field.Id}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
+		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "<input type=\"number\" id=\"{{$field.ID}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
 	case "uint", "uint8", "uint16", "uint32", "uint64":
-		return  "<label for=\"{{$field.Id}}\">" + camelString(s) +" * </label>\n" + "<input type=\"number\" id=\"{{$field.Id}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\" class=\"datepicker {{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
-	case "float","float32", "float64":
-		return  "<label for=\"{{$field.Id}}\">" + camelString(s) +" * </label>\n" + "<input type=\"number\" id=\"{{$field.Id}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
+		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "<input type=\"number\" id=\"{{$field.ID}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\" class=\"datepicker {{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
+	case "float", "float32", "float64":
+		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "<input type=\"number\" id=\"{{$field.ID}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
 	case "bool":
-		return  "<label for=\"{{$field.Id}}\">" + camelString(s) +" * </label>\n" + "{{checkbox $field \"true\"}}" + "<span class=\"error\">{{$field.Error}}</span>\n"
+		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "{{checkbox $field \"true\"}}" + "<span class=\"error\">{{$field.Error}}</span>\n"
 	}
 	return ""
-}
-
-func GetTableHeaders(structname, fields string) (string, error) {
-	if fields == "" {
-		return "", errors.New("fields can't empty")
-	}
-	fds := strings.Split(fields, ",")
-	structStr := "<th>#</th>\n"
-	for _, v := range fds {
-		kv := strings.SplitN(v, ":", 2)
-		if len(kv) != 2 {
-			return "", errors.New("the filds format is wrong. should key:type,key:type " + v)
-		}		
-		typ := getType(kv[1])
-		if typ == "" {
-			return "", errors.New("the filds format is wrong. should key:type,key:type " + v)
-		}
-		structStr += "<th> " + camelString(kv[0]) + "</th>\n"
-	}
-	structStr += "<th colspan=\"3\"></th>\n<th></th>\n<th></th>"
-	return structStr, nil
-}
-
-func GetIndexTableBody(structname, fields string) (string, error) {
-	if fields == "" {
-		return "", errors.New("fields can't empty")
-	}
-	fds := strings.Split(fields, ",")
-	structStr := "{{range ." + strings.ToLower(structname) + "s}}\n<tr>\n<td>#</td>\n"
-	for _, v := range fds {
-		kv := strings.SplitN(v, ":", 2)
-		if len(kv) != 2 {
-			return "", errors.New("the filds format is wrong. should key:type,key:type " + v)
-		}		
-		typ := getType(kv[1])
-		if typ == "" {
-			return "", errors.New("the filds format is wrong. should key:type,key:type " + v)
-		}
-		structStr += "<td> {{." + camelString(kv[0]) + "}} </td>\n"
-		
-		
-	}
-
-	structStr += "<td><a href=\"{{url \"" + camelString(structname) + ".Show\" .ID}}\"> Show </a></td>\n"
-	structStr += "<td><a href=\"{{url \"" + camelString(structname) + ".Edit\" .ID}}\"> Edit </a></td>\n"
-	structStr += "<td>\n"	  + "<form method=\"POST\" action=\"{{ url \"" + camelString(structname) + ".Delete\" .ID}}\">\n" + "<input type=\"submit\" class=\"btn btn-danger\" value=\"Delete\"></input>\n" +"</form>\n" +"</td>\n<tr>\n{{end}}\n"
-	return structStr, nil
-}
-
-func GetShowTableBody(structname, fields string) (string, error) {
-	if fields == "" {
-		return "", errors.New("fields can't empty")
-	}
-	fds := strings.Split(fields, ",")
-	structStr := "{{with ." + strings.ToLower(structname) + "}}\n"
-	for _, v := range fds {
-		kv := strings.SplitN(v, ":", 2)
-		if len(kv) != 2 {
-			return "", errors.New("the filds format is wrong. should key:type,key:type " + v)
-		}		
-		typ := getType(kv[1])
-		if typ == "" {
-			return "", errors.New("the filds format is wrong. should key:type,key:type " + v)
-		}
-		structStr += "<tr><td> <label>" + camelString(kv[0]) + ": </lable></td><td> {{." + camelString(kv[0]) + "}} </td></tr>\n"	
-	}
-	structStr += "{{end}}"
-	return structStr, nil
 }
 
 func GetAttrs(fields string) (string, error) {
@@ -397,11 +304,11 @@ func GetAttrs(fields string) (string, error) {
 	for _, v := range fds {
 		kv := strings.SplitN(v, ":", 2)
 		if len(kv) != 2 {
-			return "", errors.New("the filds format is wrong. should key:type;key:type " + v)
+			return "", errors.New("the fields format is wrong. should key:type;key:type " + v)
 		}
 		typ := getType(kv[1])
 		if typ == "" {
-			return "", errors.New("the filds format is wrong. should key:type;key:type " + v)
+			return "", errors.New("the fields format is wrong. should key:type;key:type " + v)
 		}
 		structStr = structStr + "\"" + kv[0] + "\": " + "m." + camelString(kv[0]) + ","
 	}
@@ -434,7 +341,6 @@ func camelString(s string) string {
 	return string(data[:len(data)])
 }
 
-
 // fields support type
 func getType(ktype string) string {
 	kv := strings.SplitN(ktype, ":", 2)
@@ -462,7 +368,7 @@ func getType(ktype string) string {
 }
 
 // fields support type
-func getAttrType(ktype string) (string, bool){
+func getAttrType(ktype string) (string, bool) {
 	kv := strings.SplitN(ktype, ":", 2)
 	switch kv[0] {
 	case "string":
@@ -580,5 +486,3 @@ func FormatSourceCode(filename string) {
 		ColorLog("[WARN] gofmt err: %s\n", err)
 	}
 }
-
-
