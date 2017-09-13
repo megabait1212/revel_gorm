@@ -192,7 +192,7 @@ var editTpl = `
       {{template "flash.html" .}}
     </div>
     <div class="col-md-12">
-    	<form method="POST" action="{{if .attributeset.ID}}{{url "{{modelName}}.Update"}}{{else}}{{url "{{modelName}}.Create"}}{{end}}"}}">
+    	<form method="POST" action="{{if .attributeset.ID}}{{url "{{modelName}}.Update"}}{{else}}{{url "{{modelName}}.Create"}}{{end}}}}">
 			{{formAttributes}}
     		<input type="submit" class="btn btn-success" value="{{buttonName}}" />
 		</form>
