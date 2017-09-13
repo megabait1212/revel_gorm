@@ -163,7 +163,7 @@ var indexTpl = `
                 {type: "checkbox", width: 50},
                 {
                     headerText: "",
-                    template: "<a href='{{url "{{modelName}}"}}/{^{:ID}}'>Edit</a>"
+                    template: "<a href='{{url "{{modelName}}.Index"}}/{^{:ID}}'>Edit</a>"
                 },
             ]
         });
