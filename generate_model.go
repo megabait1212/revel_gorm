@@ -189,19 +189,33 @@ func (m {{modelStructName}}) Delete{{modelStructName}}() error{
 
 // Get{{modelStructName}}s Get all {{modelStructName}} from database and returns
 // list of {{modelStructName}} on success
-func (m {{modelStructName}}) Get{{modelStructName}}s() ([]{{modelStructName}},error) {
+func (m {{modelStructName}}) Get{{modelStructName}}s(offset, limit int, where []map[string]string, sort []string) (int, []{{modelStructName}}, error) {
 	var (
 		err error
 		{{modelObjectName}}s []{{modelStructName}}
 	)
 
 	tx := database.DB.Begin()
-	if err = tx.Find(&{{modelObjectName}}s).Error; err != nil {
-     	tx.Rollback()
-     	return {{modelObjectName}}s, err
-  	}
+	order := prepareOrder(sort)
+	q, a := prepareWhere(where)
+
+	var count int
+	if q != "" && len(a) > 0 {
+		err = tx.Where(q, a...).Find(&{{modelObjectName}}s).Count(&count).Error
+		err = tx.Where(q, a...).Order(order).Offset(offset).Limit(limit).Find(&{{modelObjectName}}s).Error
+	} else {
+		err = tx.Find(&{{modelObjectName}}s).Count(&count).Error
+		err = tx.Order(order).Offset(offset).Limit(limit).Find(&{{modelObjectName}}s).Error
+	}
+
+	if err != nil {
+		tx.Rollback()
+		return count, {{modelObjectName}}s, err
+	}
+
 	tx.Commit()
-	return {{modelObjectName}}s, err
+
+	return count, {{modelObjectName}}s, err
 }
 
 // Get{{modelStructName}} Get a {{modelStructName}} from database and returns
