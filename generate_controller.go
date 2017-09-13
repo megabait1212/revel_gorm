@@ -18,7 +18,7 @@ func generateRestController(cname, crupath string) {
 	versionName := ""
 	if p != "" {
 		i := strings.LastIndex(p[:len(p)-1], "/")
-		versionName += p[i+1: len(p)-1]
+		versionName += p[i+1 : len(p)-1]
 		defaultFilename += versionName + "_"
 	}
 
@@ -126,7 +126,7 @@ func generateController(cname, crupath string) {
 	packageName := "controllers"
 	if p != "" {
 		i := strings.LastIndex(p[:len(p)-1], "/")
-		packageName = p[i+1: len(p)-1]
+		packageName = p[i+1 : len(p)-1]
 	}
 
 	// get struct for controller
@@ -342,7 +342,7 @@ import (
 {{controllerStruct}}
 
 func (c {{contorllerStructName}}) Index() revel.Result {
-	{{modelObjects}} []models.{{modelStruct}}
+	var {{modelObjects}} models.{{modelStruct}}
 
 	c.Response.Status = 200
     return c.Render({{modelObjects}})
@@ -351,7 +351,7 @@ func (c {{contorllerStructName}}) Index() revel.Result {
 func (c {{contorllerStructName}}) Grid() revel.Result {
 	limit, offset, where, sort := GetGridParams(c.Params.JSON)
 
-	count, {{modelObjects}}, err := models.{{modelStruct}}{}.Get{{modelStructs}}(limit, offset, where, sort)
+	count, {{modelObjects}}, err := models.{{modelStruct}}{}.GetMany(limit, offset, where, sort)
 	if err != nil {
 		return c.RenderError(err)
 	}
@@ -386,7 +386,7 @@ func (c {{contorllerStructName}}) Create() revel.Result {
 		return c.Redirect({{modelStruct}}.New)
 	}
 
-	{{modelObject}}, err = {{modelObject}}.Add{{modelStruct}}()
+	{{modelObject}}, err = {{modelObject}}.Add()
 	if err != nil{
 		return c.RenderError(err)
 	}
@@ -418,7 +418,7 @@ func (c {{contorllerStructName}}) Update() revel.Result {
 		return c.Redirect("/attribute-set/%d", {{modelObject}}.ID)
 	}
 
-	{{modelObject}}, err = {{modelObject}}.Update{{modelStruct}}()
+	{{modelObject}}, err = {{modelObject}}.Update()
 	if err != nil{
 		return c.RenderError(err)
 	}
@@ -442,12 +442,12 @@ func (c {{contorllerStructName}}) Delete(id string) revel.Result {
     	return c.Forbidden("Invalid id parameter", id)
     }
 
-    {{modelObject}}, err = {{modelObject}}.Get{{modelStruct}}({{modelObject}}ID)
+    {{modelObject}}, err = {{modelObject}}.GetOne({{modelObject}}ID)
     if err != nil{
     	return c.NotFound("{{modelStruct}} not found", err)
     }
 
-	err = {{modelObject}}.Delete{{modelStruct}}()
+	err = {{modelObject}}.Delete()
 	if err != nil{
 		return c.RenderError(err)
 	} 
@@ -473,12 +473,12 @@ func (c {{contorllerStructName}}) GridDelete() revel.Result {
 				return c.Forbidden("Invalid id parameter", id)
 			}
 
-			{{modelObject}}, err = {{modelObject}}.Get{{modelStruct}}(id)
+			{{modelObject}}, err = {{modelObject}}.GetOne(id)
 			if err != nil {
 				return c.NotFound("{{modelStruct}} not found", err)
 			}
 
-			err = attributeset.Delete{{modelStruct}}()
+			err = {{modelObject}}.Delete()
 			if err != nil {
 				return c.RenderError(err)
 			}
@@ -511,7 +511,7 @@ func (c {{contorllerStructName}}) Edit(id string) revel.Result {
     	return c.Forbidden("Invalid id parameter", id)
     }
 
-    {{modelObject}}, err = {{modelObject}}.Get{{modelStruct}}({{modelObject}}ID)
+    {{modelObject}}, err = {{modelObject}}.GetOne({{modelObject}}ID)
     if err != nil{
     	return c.NotFound("{{modelStruct}} not found", err)
     }
@@ -537,7 +537,7 @@ func (c {{contorllerStructName}}) Index() revel.Result {
 		{{modelObjects}} []models.{{modelStruct}}
 		err error
 	)
-	{{modelObjects}}, err = models.{{modelStruct}}{}.Get{{modelStructs}}()
+	{{modelObjects}}, err = models.{{modelStruct}}{}.GetOne()
 	if err != nil{
 		errResp := buildErrResponse(err,"500")
 		c.Response.Status = 500

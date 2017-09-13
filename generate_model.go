@@ -140,7 +140,7 @@ func (m *{{modelStructName}}) AfterUpdate(scope *gorm.Scope) error {
 
 // Add{{modelStructName}} insert a new {{modelStructName}} into database and returns
 // last inserted {{modelObjectName}} on success.
-func (m {{modelStructName}}) Add{{modelStructName}}() ({{modelStructName}}, error) {
+func (m {{modelStructName}}) Add() ({{modelStructName}}, error) {
 	var err error
 	if !database.DB.NewRecord(m) {
 		return m, errors.New("primary key should be blank")
@@ -158,7 +158,7 @@ func (m {{modelStructName}}) Add{{modelStructName}}() ({{modelStructName}}, erro
 
 // Update{{modelStructName}} update a {{modelStructName}} into database and returns
 // last nil on success.
-func (m {{modelStructName}}) Update{{modelStructName}}() ({{modelStructName}}, error){
+func (m {{modelStructName}}) Update() ({{modelStructName}}, error){
 	var err error
 
 	if database.DB.NewRecord(m) {
@@ -176,7 +176,7 @@ func (m {{modelStructName}}) Update{{modelStructName}}() ({{modelStructName}}, e
 
 // Delete{{modelStructName}} Delete {{modelStructName}} from database and returns
 // last nil on success.
-func (m {{modelStructName}}) Delete{{modelStructName}}() error{
+func (m {{modelStructName}}) Delete() error{
 	var err error
 	tx := database.DB.Begin()
 	if err = tx.Delete(&m).Error; err != nil {
@@ -189,7 +189,7 @@ func (m {{modelStructName}}) Delete{{modelStructName}}() error{
 
 // Get{{modelStructName}}s Get all {{modelStructName}} from database and returns
 // list of {{modelStructName}} on success
-func (m {{modelStructName}}) Get{{modelStructName}}s(offset, limit int, where []map[string]string, sort []string) (int, []{{modelStructName}}, error) {
+func (m {{modelStructName}}) GetMany(offset, limit int, where []map[string]string, sort []string) (int, []{{modelStructName}}, error) {
 	var (
 		err error
 		{{modelObjectName}}s []{{modelStructName}}
@@ -220,7 +220,7 @@ func (m {{modelStructName}}) Get{{modelStructName}}s(offset, limit int, where []
 
 // Get{{modelStructName}} Get a {{modelStructName}} from database and returns
 // a {{modelStructName}} on success
-func (m {{modelStructName}}) Get{{modelStructName}}(id uint64) ({{modelStructName}}, error){
+func (m {{modelStructName}}) GetOne(id uint64) ({{modelStructName}}, error){
 	var (
 		{{modelObjectName}} {{modelStructName}}
 		err error
