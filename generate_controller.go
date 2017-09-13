@@ -415,7 +415,7 @@ func (c {{contorllerStructName}}) Update() revel.Result {
 	if c.Validation.HasErrors() {
 		c.Validation.Keep()
 		c.FlashParams()
-		return c.Redirect("/attribute-set/%d", {{modelObject}}.ID)
+		return c.Redirect("/{{modelObject}}/%d", {{modelObject}}.ID)
 	}
 
 	{{modelObject}}, err = {{modelObject}}.Update()
@@ -492,7 +492,7 @@ func (c {{contorllerStructName}}) New() revel.Result {
 	c.Response.Status = 200
 	var {{modelObject}} models.{{modelStruct}}
 	c.Render({{modelObject}})
-	return c.RenderTemplate("AttributeSet/Edit.html")
+	return c.RenderTemplate("{{modelStruct}}/Edit.html")
 }
 
 func (c {{contorllerStructName}}) Edit(id string) revel.Result { 
