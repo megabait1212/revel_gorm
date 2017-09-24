@@ -255,7 +255,7 @@ func GetUpdateFormAttributes(structname, fields string) (string, error) {
 	fds := strings.Split(fields, ",")
 	structStr := ""
 	structStr += "{{with $field := field \"" + strings.ToLower(structname) + ".ID\" .}}\n"
-	structStr += "<input type=\"hidden\" id=\"{{$field.ID}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\">\n"
+	structStr += "<input type=\"hidden\" id=\"{{$field.ID}}\" name=\"id\" value=\"{{$field.Value}}\">\n"
 	structStr += "{{end}}\n"
 	for _, v := range fds {
 		kv := strings.SplitN(v, ":", 2)
@@ -279,15 +279,15 @@ func GetInputType(attrType string, s string) string {
 	kv := strings.SplitN(attrType, ":", 2)
 	switch kv[0] {
 	case "string":
-		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "<input type=\"text\" id=\"{{$field.ID}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
+		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "<input type=\"text\" id=\"{{$field.ID}}\" name=\"" + strings.ToLower(s) + "\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
 	case "datetime":
-		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "<input type=\"text\" size=\"10\" id=\"{{$field.ID}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
+		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "<input type=\"text\" size=\"10\" id=\"{{$field.ID}}\" name=\"" + strings.ToLower(s) + "\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
 	case "int", "int8", "int16", "int32", "int64":
-		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "<input type=\"number\" id=\"{{$field.ID}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
+		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "<input type=\"number\" id=\"{{$field.ID}}\" name=\"" + strings.ToLower(s) + "\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
 	case "uint", "uint8", "uint16", "uint32", "uint64":
-		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "<input type=\"number\" id=\"{{$field.ID}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\" class=\"datepicker {{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
+		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "<input type=\"number\" id=\"{{$field.ID}}\" name=\"" + strings.ToLower(s) + "\" value=\"{{$field.Value}}\" class=\"datepicker {{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
 	case "float", "float32", "float64":
-		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "<input type=\"number\" id=\"{{$field.ID}}\" name=\"{{$field.Name}}\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
+		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "<input type=\"number\" id=\"{{$field.ID}}\" name=\"" + strings.ToLower(s) + "\" value=\"{{$field.Value}}\" class=\"{{$field.ErrorClass}}\">\n" + "<span class=\"error\">{{$field.Error}}</span>\n"
 	case "bool":
 		return "<label for=\"{{$field.ID}}\">" + camelString(s) + " * </label>\n" + "{{checkbox $field \"true\"}}" + "<span class=\"error\">{{$field.Error}}</span>\n"
 	}
